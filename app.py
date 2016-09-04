@@ -1,20 +1,24 @@
-from flask import Flask, jsonify, make_response, request, abort, Response
+from flask import Flask, jsonify, request, abort
 import model
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 
+
+# error handling
 @app.errorhandler(404)
 def not_found(error=None):
     message = {
-            'status': 404,
-            'message': 'Not Found: ' + request.url,
+        'status': 404,
+        'message': 'Not Found: ' + request.url,
     }
     resp = jsonify(message)
     resp.status_code = 404
 
     return resp
 
+
+# Endpoints
 @app.route('/api/v1/cities', methods=['GET', 'POST'])
 @app.route('/api/v1/cities/<int:page>', methods=['GET'])
 def city_endpoint(page=1):
@@ -32,14 +36,15 @@ def city_endpoint(page=1):
                 })
             res.status_code = 200
         else:
+            # if no results are found.
             output = {
-            "error": "No results found. Check url again",
-            "url": request.url,
+                "error": "No results found. Check url again",
+                "url": request.url,
             }
             res = jsonify(output)
             res.status_code = 404
         return res
-    elif request.method == 'POST': # post request
+    elif request.method == 'POST':  # post request
 
         row = model.City.create(**request.json)
         query = model.City.select().where(
@@ -53,6 +58,7 @@ def city_endpoint(page=1):
             })
         res.status_code = 201
         return res
+
 
 @app.route('/api/v1/cities/<string:country_code>', methods=['GET'])
 @app.route('/api/v1/cities/<string:country_code>/<int:page>', methods=['GET'])
@@ -72,8 +78,8 @@ def city_country_endpoint(country_code, page=1):
             res.status_code = 200
         else:
             output = {
-            "error": "No results found. Check url again",
-            "url": request.url,
+                "error": "No results found. Check url again",
+                "url": request.url,
             }
             res = jsonify(output)
             res.status_code = 404
@@ -101,14 +107,14 @@ def city_country_city_endpoint(country_code, city_name):
             res.status_code = 200
         else:
             output = {
-            "error": "No results found. Check url again",
-            "url": request.url,
+                "error": "No results found. Check url again",
+                "url": request.url,
             }
             res = jsonify(output)
             res.status_code = 404
         return res
 
-    elif request.method == "PUT":
+    elif request.method == "PUT":  # put endpoint
         c = model.City.get(
             model.City.countrycode == country_code,
             model.City.name == city_name
@@ -141,7 +147,8 @@ def city_country_city_endpoint(country_code, city_name):
             })
         res.status_code = 200
         return res
-    elif request.method == "DELETE":
+
+    elif request.method == "DELETE":  # delete endpoint
         
         try:
             city = model.City.get(
@@ -158,9 +165,10 @@ def city_country_city_endpoint(country_code, city_name):
             return res
         else:
             res = jsonify({
-                "Error": "The requested resource is no longer available at the server and no forwarding address is known.",
+                "Error": "The requested resource is no longer available at the "
+                         "server and no forwarding address is known.",
                 "Status Code": 410,
-                "URL" : request.url
+                "URL": request.url
                 })
             res.status_code = 410
             return res

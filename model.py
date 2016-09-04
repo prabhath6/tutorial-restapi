@@ -27,9 +27,9 @@ class City(BaseModel):
     def serialize(self):
         data = {
             'id': self.id,
-            'name': self.name.strip(),
-            'countrycode': self.countrycode.strip(),
-            'district': self.district.strip(),
+            'name': str(self.name).strip(),
+            'countrycode': str(self.countrycode).strip(),
+            'district': str(self.district).strip(),
             'population': self.population,
         }
 

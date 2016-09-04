@@ -22,7 +22,7 @@ def insert_data(cities):
 if __name__ == '__main__':
     
     # data
-    cities = [[1,'Kabul','AFG','Kabol',1780000],
+    cities_data = [[1,'Kabul','AFG','Kabol',1780000],
     [2,'Qandahar','AFG','Qandahar',237500],
     [3,'Herat','AFG','Herat',186800],
     [4,'Mazar-e-Sharif','AFG','Balkh',127800],
@@ -4102,4 +4102,4 @@ if __name__ == '__main__':
     [4078,'Nablus','PSE','Nablus',100231],
     [4079,'Rafah','PSE','Rafah',92020]]
 
-    insert_data(cities)
+    insert_data(cities_data)
