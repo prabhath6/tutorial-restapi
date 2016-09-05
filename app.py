@@ -1,8 +1,11 @@
 from flask import Flask, jsonify, request, abort
+from flask_httpauth import HTTPBasicAuth
+from passlib.apps import postgres_context
 import model
 
 app = Flask(__name__)
 app.config.from_object(__name__)
+auth = HTTPBasicAuth()
 
 
 # error handling
@@ -17,10 +20,43 @@ def not_found(error=None):
 
     return resp
 
+# Authentication callback
+@auth.verify_password
+def verify_password(username, password):
+    user = model.UserData.get(model.UserData.username == username)
+    if not user or not user.verify_password(password):
+        return False
+    return True
+
+
+# User registration
+@app.route('/api/v1/users', methods=['POST'])
+def add_new_user():
+    username = request.json['username']
+    password = request.json['password_hash']
+
+    if username is None or password is None:
+        abort(400)
+    try:
+        user = model.UserData.get(model.UserData.username == username)
+    except:
+        user = None
+
+    if user is not None:
+        abort(400)
+
+    user = model.UserData(username=username, password_hash=password)
+    user.hash_password()
+    user.save()
+    res = jsonify({'username' : user.username, "meta": {"page_url": request.url}})
+    res.status_code = 201
+    return res
+
 
 # Endpoints
 @app.route('/api/v1/cities', methods=['GET', 'POST'])
 @app.route('/api/v1/cities/<int:page>', methods=['GET'])
+@auth.login_required
 def city_endpoint(page=1):
 
     # get request
@@ -87,6 +123,7 @@ def city_country_endpoint(country_code, page=1):
 
 
 @app.route('/api/v1/cities/<string:country_code>/<string:city_name>', methods=['GET', 'DELETE', 'PUT'])
+@auth.login_required
 def city_country_city_endpoint(country_code, city_name):
 
     # get request
