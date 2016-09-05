@@ -1,12 +1,14 @@
-from model import psql_db, City
+from model import psql_db, City, UserData
+from passlib.apps import postgres_context
 
 
-def insert_data(cities):
+def insert_data(cities, users):
 
     # create table
-    psql_db.create_table(City, safe=True)
+    psql_db.create_tables([City, UserData], safe=True)
 
     with psql_db.atomic():
+        
         # insert data
         for city in cities:
             track = dict()
@@ -16,6 +18,15 @@ def insert_data(cities):
             track["population"] = city[4]
 
             City.create(**track)
+
+    with psql_db.atomic():
+        # insert data
+        for user in users:
+            track = dict()
+            track["username"]= user[0]
+            track["password_hash"] = postgres_context.encrypt(user[1], user="prabhath")
+
+            UserData.create(**track)
 
     print("Done")
 
@@ -4102,4 +4113,18 @@ if __name__ == '__main__':
     [4078,'Nablus','PSE','Nablus',100231],
     [4079,'Rafah','PSE','Rafah',92020]]
 
-    insert_data(cities_data)
+    # sample user data
+    users = [
+    ["AMPFIBIAN", "ampfibian"],
+    ["ARMODRILLO", "armodrillo"],
+    ["NANOMECH", "nanomech"],
+    ["NRG", "nrg"],
+    ["TERRASPIN", "terraspin"],
+    ["BIG_CHILL", "big_chill"],
+    ["CANNONBOLT", "cannonbolt"],
+    ["ECHO_ECHO", "echo_echo"],
+    ["HUMUNGOUSAUR", "humungousaur"],
+    ["SPIDERMONKEY", "spidermonkey"],
+    ]
+
+    insert_data(cities_data, users)
