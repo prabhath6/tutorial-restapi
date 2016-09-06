@@ -1,5 +1,8 @@
 from peewee import *
 from passlib.apps import postgres_context
+from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
+from app import *
+
 
 psql_db = PostgresqlDatabase(
     'postgres',
@@ -68,6 +71,22 @@ class UserData(Model):
 
     def verify_password(self, password):
         return postgres_context.verify(password, self.password_hash , user="prabhath")
+
+    def generate_auth_token(self, expiration = 600):
+        s = Serializer(app.config['SECRET_KEY'], expires_in = expiration)
+        return s.dumps({ 'id': self.id })
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except SignatureExpired:
+            return None # valid token, but expired
+        except BadSignature:
+            return None # invalid token
+        user = UserData.get(UserData.id == data['id'])
+        return user
 
     class Meta:
         database = psql_db

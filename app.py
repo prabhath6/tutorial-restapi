@@ -1,10 +1,12 @@
-from flask import Flask, jsonify, request, abort
+from flask import Flask, jsonify, request, abort, g
 from flask_httpauth import HTTPBasicAuth
 from passlib.apps import postgres_context
 import model
+import os
 
 app = Flask(__name__)
 app.config.from_object(__name__)
+app.config['SECRET_KEY'] = os.environ["SECRET_KEY"]
 auth = HTTPBasicAuth()
 
 
@@ -22,11 +24,25 @@ def not_found(error=None):
 
 # Authentication callback
 @auth.verify_password
-def verify_password(username, password):
-    user = model.UserData.get(model.UserData.username == username)
-    if not user or not user.verify_password(password):
+def verify_password(username_or_token, password):
+    # first try to authenticate by token
+    user = model.UserData.verify_auth_token(username_or_token)
+    if not user:
         return False
+    g.user = user
     return True
+
+# token endpoint
+@app.route('/api/v1/token')
+@auth.login_required
+def get_auth_token():
+    duration = 600
+    token = g.user.generate_auth_token(duration)
+    return jsonify({ 
+        'token': token.decode('ascii'),
+        'duration': duration,
+        'message': 'After Duration: {duration} secs, request for a new token.'.format(duration=duration)
+     })
 
 
 # User registration
