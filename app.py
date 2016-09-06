@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request, abort, g
 from flask_httpauth import HTTPBasicAuth
-from passlib.apps import postgres_context
 import model
 import os
 
@@ -22,15 +21,20 @@ def not_found(error=None):
 
     return resp
 
+
 # Authentication callback
 @auth.verify_password
 def verify_password(username_or_token, password):
     # first try to authenticate by token
     user = model.UserData.verify_auth_token(username_or_token)
     if not user:
-        return False
-    g.user = user
+        # Second try to authenticate by login credentials
+        user = model.UserData.get(model.UserData.username == username_or_token)
+        if not user or not user.verify_password(password):
+            return False
+        g.user = user
     return True
+
 
 # token endpoint
 @app.route('/api/v1/token')
@@ -64,7 +68,7 @@ def add_new_user():
     user = model.UserData(username=username, password_hash=password)
     user.hash_password()
     user.save()
-    res = jsonify({'username' : user.username, "meta": {"page_url": request.url}})
+    res = jsonify({'username': user.username, "meta": {"page_url": request.url}})
     res.status_code = 201
     return res
 

@@ -48,6 +48,7 @@ class City(BaseModel):
             self.population
         )
 
+
 class UserData(Model):
     id = PrimaryKeyField(null=False)
     username = CharField(max_length=50, unique=True)
@@ -56,9 +57,9 @@ class UserData(Model):
     @property
     def serialize(self):
         data = {
-        'id': self.id,
-        'username': self.username,
-        'password_hash': self.password_hash
+            'id': self.id,
+            'username': self.username,
+            'password_hash': self.password_hash
         }
 
         return data
@@ -70,11 +71,11 @@ class UserData(Model):
         self.password_hash = postgres_context.encrypt(self.password_hash, user="prabhath")
 
     def verify_password(self, password):
-        return postgres_context.verify(password, self.password_hash , user="prabhath")
+        return postgres_context.verify(password, self.password_hash, user="prabhath")
 
-    def generate_auth_token(self, expiration = 600):
-        s = Serializer(app.config['SECRET_KEY'], expires_in = expiration)
-        return s.dumps({ 'id': self.id })
+    def generate_auth_token(self, expiration=600):
+        s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
+        return s.dumps({'id': self.id})
 
     @staticmethod
     def verify_auth_token(token):
@@ -82,9 +83,9 @@ class UserData(Model):
         try:
             data = s.loads(token)
         except SignatureExpired:
-            return None # valid token, but expired
+            return None  # valid token, but expired
         except BadSignature:
-            return None # invalid token
+            return None  # invalid token
         user = UserData.get(UserData.id == data['id'])
         return user
 
